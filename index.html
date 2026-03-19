@@ -1,26 +1,23 @@
 ﻿<!DOCTYPE html>
-<html lang="zh-TW" class="dark">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ChronosDream | Classroom Terminal</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <title>教室時鐘 - 合成夢境終端</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      /* Design System Tokens */
       --background: #0e0e13;
       --on-background: #f8f5fd;
-      --primary: #aaffdc; /* Neon Green */
-      --on-primary: #00654b;
-      --secondary: #ff59e3; /* Neon Pink */
-      --tertiary: #ac89ff; /* Ethereal Purple */
+      --primary: #aaffdc; /* 霓虹綠 */
+      --secondary: #ff59e3; /* 霓虹粉 */
+      --tertiary: #ac89ff; /* 虛幻紫 */
       --surface: #131318;
-      --surface-container-low: #19191f;
-      --surface-container-high: #25252c;
-      --outline-variant: rgba(170, 255, 220, 0.15);
-      
-      --neon-glow-primary: 0 0 15px rgba(170, 255, 220, 0.6);
-      --neon-glow-secondary: 0 0 15px rgba(255, 89, 227, 0.6);
+      --surface-low: #19191f;
+      --surface-high: #25252c;
+      --outline: rgba(170, 255, 220, 0.15);
+      --neon-glow: 0 0 15px rgba(170, 255, 220, 0.5);
+      --neon-glow-pink: 0 0 15px rgba(255, 89, 227, 0.5);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -28,233 +25,228 @@
     body {
       background: var(--background);
       color: var(--on-background);
-      font-family: 'Manrope', sans-serif;
+      font-family: 'Noto Sans TC', 'Space Grotesk', sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      overflow-x: hidden;
+      overflow: hidden;
     }
 
-    /* 背景裝飾：網格與雜訊 */
-    .bg-overlay {
+    /* 背景網格裝飾 */
+    .bg-grid {
       position: fixed;
       inset: 0;
-      pointer-events: none;
       z-index: -1;
       background-image: 
-        radial-gradient(circle at 50% 50%, rgba(172, 137, 255, 0.05) 0%, transparent 70%),
-        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-      opacity: 0.4;
+        linear-gradient(rgba(170, 255, 220, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(170, 255, 220, 0.05) 1px, transparent 1px);
+      background-size: 50px 50px;
+      mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
     }
 
-    /* 容器佈局 */
     .container {
       position: relative;
       z-index: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 40px;
-      padding: 40px 20px;
-      width: min(1000px, 96vw);
+      gap: 30px;
+      padding: 20px;
+      width: min(850px, 95vw);
     }
 
-    /* ── MODE SWITCHER ── */
+    /* ── 模式切換器 ── */
     .mode-switcher {
       display: flex;
-      background: var(--surface-container-low);
-      padding: 4px;
-      border-radius: 0.375rem; /* roundedness.md */
+      background: var(--surface-low);
+      padding: 5px;
+      border-radius: 12px;
+      border: 1px solid var(--outline);
     }
     .mode-btn {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.75rem;
+      font-size: 0.9rem;
       font-weight: 700;
-      padding: 10px 28px;
+      padding: 10px 30px;
       border: none;
       background: transparent;
       color: rgba(248, 245, 253, 0.4);
       cursor: pointer;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
       transition: all .3s;
-      border-radius: 0.25rem;
+      border-radius: 8px;
     }
     .mode-btn.active {
-      background: var(--surface-container-high);
+      background: var(--surface-high);
       color: var(--primary);
-      box-shadow: var(--neon-glow-primary);
+      box-shadow: var(--neon-glow);
     }
 
-    /* ── DIGITAL CLOCK ── */
-    .clock-section {
+    /* ── 數位時鐘區域 ── */
+    .clock-display {
       text-align: center;
-      position: relative;
     }
-    .date-line {
+    .date-text {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.2rem;
+      font-size: clamp(1rem, 3vw, 1.4rem);
       color: var(--tertiary);
       letter-spacing: 0.3em;
-      margin-bottom: 8px;
+      margin-bottom: 5px;
     }
-    .digital {
+    .time-main {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(4.5rem, 15vw, 9.5rem);
+      font-weight: 700;
+      color: var(--primary);
+      text-shadow: var(--neon-glow);
+      line-height: 1;
       display: flex;
       align-items: baseline;
-      justify-content: center;
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      font-size: clamp(5rem, 15vw, 10rem);
-      color: var(--primary);
-      text-shadow: var(--neon-glow-primary);
-      line-height: 0.9;
     }
-    .seconds {
-      font-size: 0.5em;
-      opacity: 0.7;
-      margin-left: 10px;
+    .time-sec {
+      font-size: 0.45em;
+      opacity: 0.6;
+      margin-left: 15px;
     }
-    .weekday { 
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.5rem; 
-      color: var(--secondary); 
-      letter-spacing: 0.5em; 
-      text-transform: uppercase;
+    .weekday-text {
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      color: var(--secondary);
+      letter-spacing: 0.5em;
       margin-top: 10px;
-      text-shadow: var(--neon-glow-secondary);
     }
 
-    /* ── EXAM PANEL (Bento Box Style) ── */
+    /* ── 考試面板 (Bento Style) ── */
     .exam-panel {
       width: 100%;
-      background: var(--surface-container-low);
-      border-radius: 1.5rem; /* roundedness.xl */
-      padding: 32px;
-      border: 1px solid var(--outline-variant);
-      transition: all 0.5s ease;
+      background: var(--surface-low);
+      border: 1px solid var(--outline);
+      border-radius: 20px;
+      padding: 25px;
+      position: relative;
     }
-    .exam-header {
+    .panel-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
+      align-items: center;
+      margin-bottom: 20px;
     }
-    .exam-title {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.25rem;
+    .panel-title {
+      font-size: 1.1rem;
       font-weight: 700;
-      color: var(--on-background);
-      text-transform: uppercase;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
-    .exam-title::before {
+    .panel-title::before {
       content: '';
-      width: 4px; height: 20px;
+      width: 4px; height: 18px;
       background: var(--primary);
-      border-radius: 2px;
+      box-shadow: var(--neon-glow);
     }
 
-    /* Toggle Switch 改裝 */
-    .toggle-wrap { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 0.9rem; }
-    .toggle { position: relative; width: 50px; height: 26px; }
+    /* Toggle 開關 */
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.85rem; color: #888; }
+    .toggle { position: relative; width: 46px; height: 24px; }
     .toggle input { display: none; }
     .toggle-track {
       position: absolute; inset: 0;
-      background: var(--surface-container-high);
-      border-radius: 99px;
-      transition: 0.3s;
+      background: var(--surface-high);
+      border-radius: 20px;
+      transition: .3s;
     }
     .toggle-thumb {
-      position: absolute; top: 4px; left: 4px;
-      width: 18px; height: 18px; border-radius: 50%;
-      background: var(--on-background);
-      transition: 0.3s;
+      position: absolute; top: 3px; left: 3px;
+      width: 18px; height: 18px;
+      background: #eee;
+      border-radius: 50%;
+      transition: .3s;
     }
     input:checked + .toggle-track { background: var(--secondary); }
-    input:checked + .toggle-track + .toggle-thumb { transform: translateX(24px); background: #fff; }
+    input:checked + .toggle-track + .toggle-thumb { transform: translateX(22px); }
 
-    /* ── COUNTDOWN BOX ── */
-    .countdown-box {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px;
+    /* ── 倒數計時容器 ── */
+    .countdown-container {
       background: var(--background);
-      border-radius: 1rem;
-      margin-top: 20px;
+      border-radius: 15px;
+      padding: 25px;
+      text-align: center;
+      display: none;
     }
-    .countdown-box.visible { display: flex; }
-    .countdown-time {
+    .countdown-container.visible { display: block; }
+
+    .subject-badge {
+      display: inline-block;
+      padding: 4px 16px;
+      background: rgba(172, 137, 255, 0.1);
+      border: 1px solid var(--tertiary);
+      color: var(--tertiary);
+      border-radius: 50px;
+      font-size: 0.85rem;
+      margin-bottom: 15px;
+    }
+
+    .countdown-timer {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: clamp(3rem, 10vw, 6rem);
+      font-size: clamp(3rem, 10vw, 5.5rem);
       font-weight: 700;
       color: var(--primary);
+      text-shadow: var(--neon-glow);
+      line-height: 1;
     }
-    .countdown-time.urgent {
+    .countdown-timer.urgent {
       color: var(--secondary);
-      animation: pulse 1s infinite alternate;
+      text-shadow: var(--neon-glow-pink);
+      animation: pulse 0.8s infinite alternate;
     }
-    @keyframes pulse { to { opacity: 0.6; text-shadow: var(--neon-glow-secondary); } }
+    @keyframes pulse { to { opacity: 0.6; } }
 
-    /* Progress Bar */
-    .countdown-bar-wrap { 
-      width: 100%; height: 6px; 
-      background: var(--surface-container-high); 
-      border-radius: 99px; margin: 20px 0; overflow: hidden;
-    }
-    .countdown-bar { 
-      height: 100%; width: 100%;
-      background: linear-gradient(90deg, var(--primary), var(--tertiary));
-      transition: width 1s linear;
-    }
+    /* 進度條 */
+    .progress-wrap { width: 100%; height: 6px; background: var(--surface-high); border-radius: 10px; margin: 20px 0; overflow: hidden; }
+    .progress-bar { height: 100%; width: 100%; background: linear-gradient(90deg, var(--primary), var(--tertiary)); transition: width 1s linear; }
 
-    /* ── 模擬考 Badge ── */
-    .subject-badge {
-      display: none;
-      background: rgba(172, 137, 255, 0.1);
-      color: var(--tertiary);
-      padding: 8px 20px;
-      border-radius: 99px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      margin-bottom: 16px;
-      border: 1px solid rgba(172, 137, 255, 0.3);
-    }
-    .subject-badge.visible { display: inline-flex; }
+    .period-info { font-size: 0.85rem; color: #888; }
 
-    /* Canvas */
-    #sakura-canvas {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+    /* 小按鈕 */
+    .day-btns { display: flex; gap: 10px; margin-bottom: 15px; }
+    .btn-small {
+      padding: 6px 15px;
+      background: var(--surface-high);
+      border: 1px solid var(--outline);
+      color: #888;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
     }
+    .btn-small.active { background: var(--tertiary); color: white; border-color: var(--tertiary); }
+
+    /* 畫布 */
+    #sakura-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
   </style>
 </head>
 <body>
-<div class="bg-overlay"></div>
+
+<div class="bg-grid"></div>
 <canvas id="sakura-canvas"></canvas>
 
 <div class="container">
   <div class="mode-switcher">
-    <button class="mode-btn active" data-mode="monthly" id="btnMonthly">Monthly Exam</button>
-    <button class="mode-btn" data-mode="mock" id="btnMock">Mock Exam</button>
+    <button class="mode-btn active" id="btnMonthly">月 考 模 式</button>
+    <button class="mode-btn" id="btnMock">模 擬 考 模 式</button>
   </div>
 
-  <div class="clock-section">
-    <div class="date-line" id="dateLine">2024 · 10 · 24</div>
-    <div class="digital">
-      <span id="clock-hms">09:41</span><span class="seconds" id="clock-s">:58</span>
+  <div class="clock-display">
+    <div class="date-text" id="dateText">2024 · 10 · 24</div>
+    <div class="time-main">
+      <span id="clock-hm">00:00</span><span class="time-sec" id="clock-s">:00</span>
     </div>
-    <div class="weekday" id="weekday">TUESDAY</div>
+    <div class="weekday-text" id="weekdayText">星期一</div>
   </div>
 
   <div class="exam-panel" id="panelMonthly">
-    <div class="exam-header">
-      <div class="exam-title">Exam Terminal</div>
+    <div class="panel-header">
+      <div class="panel-title">月考倒數終端</div>
       <label class="toggle-wrap">
-        <span>LINK START</span>
+        <span>開啟監控</span>
         <div class="toggle">
           <input type="checkbox" id="examToggle" />
           <div class="toggle-track"></div>
@@ -262,24 +254,23 @@
         </div>
       </label>
     </div>
-
+    
     <div id="examControls" style="display:none;">
-      <div class="countdown-box visible" id="countdownBox">
-        <div class="subject-badge visible" style="border-color: var(--primary); color: var(--primary);">
-            MONTHLY CYCLE
-        </div>
-        <div class="countdown-time" id="countdownDisplay">00:00</div>
-        <div class="countdown-bar-wrap"><div class="countdown-bar" id="countdownBar"></div></div>
-        <div id="periodInfo" style="font-family:'Space Grotesk'; font-size: 0.8rem; opacity: 0.6;"></div>
+      <div class="countdown-container visible">
+        <div class="subject-badge" id="monthlyBadge">第 1 節 進行中</div>
+        <div class="countdown-timer" id="monthlyDisplay">00:00</div>
+        <div class="progress-wrap"><div class="progress-bar" id="monthlyBar"></div></div>
+        <div class="period-info" id="monthlyInfo">00:00 ~ 00:00</div>
       </div>
     </div>
-    <div class="status-off" id="statusOff" style="text-align:center; opacity:0.4;">TERMINAL OFFLINE - TOGGLE TO SYNC</div>
+    <div id="statusOff" style="text-align:center; color:#555; font-size:0.9rem;">系統待機中...請開啟開關</div>
   </div>
 
   <div class="exam-panel" id="panelMock" style="display:none;">
-    <div class="exam-header">
-      <div class="exam-title" style="color:var(--tertiary)">Mock System</div>
+    <div class="panel-header">
+      <div class="panel-title" style="color:var(--tertiary)">模擬考系統</div>
       <label class="toggle-wrap">
+        <span>系統連接</span>
         <div class="toggle">
           <input type="checkbox" id="mockToggle" />
           <div class="toggle-track"></div>
@@ -287,28 +278,26 @@
         </div>
       </label>
     </div>
-    
-    <div id="mockDayRow" style="display:flex; gap:10px; margin-bottom:20px;">
-        <button class="mode-btn active" id="btnDay1" style="font-size:0.6rem">Day 01</button>
-        <button class="mode-btn" id="btnDay2" style="font-size:0.6rem">Day 02</button>
+
+    <div id="mockDayRow" class="day-btns">
+      <button class="btn-small active" id="btnDay1">第一天</button>
+      <button class="btn-small" id="btnDay2">第二天</button>
     </div>
 
-    <div class="countdown-box mock-box" id="mockCountdownBox">
-      <div class="subject-badge visible" id="subjectBadge">
-        <span id="subjectName">SUBJECT</span>
-      </div>
-      <div class="countdown-time" id="mockTimeDisplay">00:00</div>
-      <div class="countdown-bar-wrap"><div class="countdown-bar" id="mockBar" style="background: var(--tertiary);"></div></div>
-      <div class="period-info" id="mockInfo"></div>
+    <div class="countdown-container" id="mockCountdownBox">
+      <div class="subject-badge" id="mockSubject">科目讀取中...</div>
+      <div class="countdown-timer" id="mockDisplay">00:00</div>
+      <div class="progress-wrap"><div class="progress-bar" id="mockBar" style="background:var(--tertiary)"></div></div>
+      <div class="period-info" id="mockInfo">00:00 ~ 00:00</div>
     </div>
-    <div class="status-off" id="mockStatusOff" style="text-align:center; opacity:0.4;">WAITING FOR INPUT...</div>
+    <div id="mockStatusOff" style="text-align:center; color:#555; font-size:0.9rem;">模擬考監控未啟動</div>
   </div>
 </div>
 
 <script>
-  /* ── 核心邏輯保留 ── */
-  // (此處內容與您提供的 JS 邏輯完全一致，僅更新 DOM 映射名稱)
-  
+  /* ═══════════════════════════════════
+     核心資料與邏輯 (保留您原有的所有邏輯)
+     ═══════════════════════════════════ */
   const PERIODS = [
     { label:'1', start:[8,10]  }, { label:'2', start:[9,10]  },
     { label:'3', start:[10,10] }, { label:'4', start:[11,10] },
@@ -318,91 +307,164 @@
   const PERIOD_DURATIONS = [[50,80,100],[50,80,100],[50,80,100],[50],[50,80,100],[50,80,100],[50]];
   const MOCK_SCHEDULE = {
     day1: [
-      { subject:'國　文', start:[8,20], duration:100 },
-      { subject:'英　文', start:[10,20], duration:100 },
+      { subject:'國 文', start:[8,20], duration:100 },
+      { subject:'英 文', start:[10,20], duration:100 },
       { subject:'專業科目（一）', start:[13,10], duration:100 },
     ],
     day2: [
-      { subject:'數　學', start:[8,20], duration:80 },
+      { subject:'數 學', start:[8,20], duration:80 },
       { subject:'專業科目（二）', start:[10,20], duration:100 },
     ],
   };
 
-  let currentMode = 'monthly', examOn = false, selectedPeriod = null, selectedDuration = 50, mockOn = false, mockDay = 'day1';
+  const WEEKDAYS = ['日','一','二','三','四','五','六'];
+  let currentMode = 'monthly', examOn = false, selectedDuration = 50, mockOn = false, mockDay = 'day1';
 
   function pad(n){ return String(n).padStart(2,'0'); }
 
-  // ── 更新時鐘 ──
+  // 1. 更新主時鐘
   function tick() {
     const now = new Date();
-    const hms = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    const s = `:${pad(now.getSeconds())}`;
-    document.getElementById('clock-hms').textContent = hms;
-    document.getElementById('clock-s').textContent = s;
-    
-    document.getElementById('dateLine').textContent = `${now.getFullYear()} · ${pad(now.getMonth()+1)} · ${pad(now.getDate())}`;
-    const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
-    document.getElementById('weekday').textContent = days[now.getDay()];
+    document.getElementById('clock-hm').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    document.getElementById('clock-s').textContent = `:${pad(now.getSeconds())}`;
+    document.getElementById('dateText').textContent = `${now.getFullYear()} · ${pad(now.getMonth()+1)} · ${pad(now.getDate())}`;
+    document.getElementById('weekdayText').textContent = `星期${WEEKDAYS[now.getDay()]}`;
 
     if (examOn) updateMonthly(now);
     if (mockOn) updateMock(now);
   }
 
-  /* ... 其餘原本的 updateMonthly, updateMock, detectPeriod 邏輯保持不變 ... */
-  // 為了節省篇幅，此處邏輯需對應您的原始 JS，但需指向新的 ID 如 'countdownDisplay' 等。
+  // 2. 月考邏輯處理
+  function updateMonthly(now) {
+    const nowSec = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
+    let currentPeriodIdx = -1;
+
+    for (let i=0; i<PERIODS.length; i++) {
+      const s = PERIODS[i].start[0]*3600 + PERIODS[i].start[1]*60;
+      const e = s + selectedDuration*60;
+      if (nowSec >= s && nowSec < e) { currentPeriodIdx = i; break; }
+    }
+
+    const display = document.getElementById('monthlyDisplay');
+    const badge = document.getElementById('monthlyBadge');
+    const info = document.getElementById('monthlyInfo');
+    const bar = document.getElementById('monthlyBar');
+
+    if (currentPeriodIdx !== -1) {
+      const p = PERIODS[currentPeriodIdx];
+      const eSec = p.start[0]*3600 + p.start[1]*60 + selectedDuration*60;
+      const rem = eSec - nowSec;
+      const mm = Math.floor(rem/60);
+      const ss = rem%60;
+      
+      badge.textContent = `第 ${p.label} 節 進行中`;
+      display.textContent = `${pad(mm)}:${pad(ss)}`;
+      display.classList.toggle('urgent', rem <= 300);
+      bar.style.width = `${(rem/(selectedDuration*60))*100}%`;
+      info.textContent = `${pad(p.start[0])}:${pad(p.start[1])} ~ ${pad(Math.floor(eSec/3600))}:${pad(Math.floor((eSec%3600)/60))}`;
+    } else {
+      badge.textContent = `非考試時段`;
+      display.textContent = `--:--`;
+      display.classList.remove('urgent');
+      bar.style.width = `0%`;
+      info.textContent = `等待下一節次...`;
+    }
+  }
+
+  // 3. 模擬考邏輯處理
+  function updateMock(now) {
+    const nowSec = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
+    const schedule = MOCK_SCHEDULE[mockDay];
+    let currentMock = null;
+
+    for (const item of schedule) {
+      const s = item.start[0]*3600 + item.start[1]*60;
+      const e = s + item.duration*60;
+      if (nowSec >= s && nowSec < e) { currentMock = { ...item, endSec: e, startSec: s }; break; }
+    }
+
+    const display = document.getElementById('mockDisplay');
+    const badge = document.getElementById('mockSubject');
+    const info = document.getElementById('mockInfo');
+    const bar = document.getElementById('mockBar');
+
+    if (currentMock) {
+      const rem = currentMock.endSec - nowSec;
+      badge.textContent = currentMock.subject;
+      display.textContent = `${pad(Math.floor(rem/60))}:${pad(rem%60)}`;
+      display.classList.toggle('urgent', rem <= 600);
+      bar.style.width = `${(rem/(currentMock.duration*60))*100}%`;
+      const eH = Math.floor(currentMock.endSec/3600);
+      const eM = Math.floor((currentMock.endSec%3600)/60);
+      info.textContent = `${pad(currentMock.start[0])}:${pad(currentMock.start[1])} ~ ${pad(eH)}:${pad(eM)}`;
+    } else {
+      badge.textContent = `非模擬考試時段`;
+      display.textContent = `--:--`;
+      bar.style.width = `0%`;
+      info.textContent = `請確認考試天次`;
+    }
+  }
 
   // ─────────────────────────────
-  //  切換功能實作 (對應原邏輯)
+  // UI 事件監聽
   // ─────────────────────────────
   document.getElementById('btnMonthly').addEventListener('click', () => {
-      currentMode = 'monthly';
-      document.getElementById('btnMonthly').classList.add('active');
-      document.getElementById('btnMock').classList.remove('active');
-      document.getElementById('panelMonthly').style.display = 'block';
-      document.getElementById('panelMock').style.display = 'none';
+    setMode('monthly');
+  });
+  document.getElementById('btnMock').addEventListener('click', () => {
+    setMode('mock');
   });
 
-  document.getElementById('btnMock').addEventListener('click', () => {
-      currentMode = 'mock';
-      document.getElementById('btnMock').classList.add('active');
-      document.getElementById('btnMonthly').classList.remove('active');
-      document.getElementById('panelMock').style.display = 'block';
-      document.getElementById('panelMonthly').style.display = 'none';
-  });
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('btnMonthly').classList.toggle('active', mode==='monthly');
+    document.getElementById('btnMock').classList.toggle('active', mode==='mock');
+    document.getElementById('panelMonthly').style.display = mode==='monthly' ? 'block' : 'none';
+    document.getElementById('panelMock').style.display = mode==='mock' ? 'block' : 'none';
+  }
 
   document.getElementById('examToggle').addEventListener('change', (e) => {
-      examOn = e.target.checked;
-      document.getElementById('examControls').style.display = examOn ? 'block' : 'none';
-      document.getElementById('statusOff').style.display = examOn ? 'none' : 'block';
+    examOn = e.target.checked;
+    document.getElementById('examControls').style.display = examOn ? 'block' : 'none';
+    document.getElementById('statusOff').style.display = examOn ? 'none' : 'block';
   });
 
   document.getElementById('mockToggle').addEventListener('change', (e) => {
-      mockOn = e.target.checked;
-      document.getElementById('mockCountdownBox').style.display = mockOn ? 'flex' : 'none';
-      document.getElementById('mockStatusOff').style.display = mockOn ? 'none' : 'block';
+    mockOn = e.target.checked;
+    document.getElementById('mockCountdownBox').style.display = mockOn ? 'block' : 'none';
+    document.getElementById('mockStatusOff').style.display = mockOn ? 'none' : 'block';
   });
 
-  // 粒子動畫更新 (原櫻花邏輯改色)
+  document.getElementById('btnDay1').addEventListener('click', () => {
+    mockDay = 'day1';
+    document.getElementById('btnDay1').classList.add('active');
+    document.getElementById('btnDay2').classList.remove('active');
+  });
+  document.getElementById('btnDay2').addEventListener('click', () => {
+    mockDay = 'day2';
+    document.getElementById('btnDay2').classList.add('active');
+    document.getElementById('btnDay1').classList.remove('active');
+  });
+
+  // 數位粒子背景
   const canvas = document.getElementById('sakura-canvas');
   const ctx = canvas.getContext('2d');
-  let width, height, petals = [];
+  let width, height, dots = [];
   function initCanvas() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
-    petals = Array.from({length: 50}, () => ({
-      x: Math.random() * width, y: Math.random() * height,
-      s: Math.random() * 2 + 1, r: Math.random() * 2,
-      c: Math.random() > 0.5 ? '#aaffdc' : '#ff59e3'
+    dots = Array.from({length: 40}, () => ({
+      x: Math.random()*width, y: Math.random()*height,
+      s: Math.random()*2 + 1, v: Math.random()*0.5 + 0.2,
+      c: Math.random() > 0.5 ? '#aaffdc' : '#ac89ff'
     }));
   }
   function draw() {
     ctx.clearRect(0,0,width,height);
-    petals.forEach(p => {
-      p.y += p.s; p.x += Math.sin(p.r); p.r += 0.02;
-      if(p.y > height) p.y = -10;
-      ctx.fillStyle = p.c;
-      ctx.globalAlpha = 0.2;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill();
+    dots.forEach(d => {
+      d.y -= d.v; if(d.y < -10) d.y = height + 10;
+      ctx.fillStyle = d.c; ctx.globalAlpha = 0.3;
+      ctx.beginPath(); ctx.arc(d.x, d.y, d.s, 0, Math.PI*2); ctx.fill();
     });
     requestAnimationFrame(draw);
   }
